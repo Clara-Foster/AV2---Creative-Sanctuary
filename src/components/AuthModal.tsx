@@ -18,6 +18,7 @@ import {
   ArrowRight,
   Palette
 } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -36,26 +37,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // List of mock users stored in memory/session for registration persistence in single-session client
-  const getStoredUsers = () => {
-    try {
-      const stored = localStorage.getItem('cs_registered_users');
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  };
-
-  const saveUserToStorage = (userEmail: string, userData: any) => {
-    try {
-      const users = getStoredUsers();
-      users[userEmail.toLowerCase()] = userData;
-      localStorage.setItem('cs_registered_users', JSON.stringify(users));
-    } catch (e) {
-      console.error("Failed to save user in local storage", e);
-    }
-  };
-
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -73,77 +54,82 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
     setIsLoading(true);
 
-    // Simulate database latency
-    setTimeout(() => {
-      const storedUsers = getStoredUsers();
-      const normalizedEmail = email.toLowerCase();
+    (async () => {
+      try {
+        const normalizedEmail = email.toLowerCase();
+        let response;
 
-      if (tab === 'login') {
-        // Simple authentication check
-        // Check for default credentials first: cfm@cesar.school / 123456
-        if (normalizedEmail === 'cfm@cesar.school' && password === '123456') {
-          const initials = 'EV'; // Elena Vance
-          onSuccess({ name: 'Elena Vance', email: 'cfm@cesar.school', initials });
-          setSuccessMsg('Acesso autorizado! Bem-vindo ao seu santuário criativo.');
-          setTimeout(() => {
-            onClose();
-            setIsLoading(false);
-            setSuccessMsg('');
-          }, 1000);
-        } else if (storedUsers[normalizedEmail] && storedUsers[normalizedEmail].password === password) {
-          const user = storedUsers[normalizedEmail];
-          const initials = user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
-          onSuccess({ name: user.name, email: user.email, initials });
-          setSuccessMsg(`Bem-vindo de volta, ${user.name}!`);
-          setTimeout(() => {
-            onClose();
-            setIsLoading(false);
-            setSuccessMsg('');
-          }, 1000);
+        if (tab === 'login') {
+          response = await supabase.auth.signInWithPassword({
+            email: normalizedEmail,
+            password,
+          });
         } else {
-          setErrorMsg('E-mail ou senha inválidos. Utilize cfm@cesar.school (senha: 123456) para teste rápido.');
-          setIsLoading(false);
-        }
-      } else {
-        // Register flow
-        if (normalizedEmail === 'cfm@cesar.school') {
-          setErrorMsg('Este e-mail já está registrado na plataforma.');
-          setIsLoading(false);
-          return;
+          response = await supabase.auth.signUp({
+            email: normalizedEmail,
+            password,
+            options: {
+              data: { name },
+            },
+          });
         }
 
-        if (storedUsers[normalizedEmail]) {
-          setErrorMsg('Este e-mail de artista já está cadastrado.');
-          setIsLoading(false);
-          return;
-        }
-
-        if (password.length < 5) {
-          setErrorMsg('A senha deve conter pelo menos 5 caracteres.');
+        const { data, error } = response;
+        if (error) {
+          setErrorMsg(error.message || 'Erro na autenticação');
           setIsLoading(false);
           return;
         }
 
-        // Save new user
-        const newUser = { name, email, password, artMedium };
-        saveUserToStorage(normalizedEmail, newUser);
+        const user = 'user' in data ? data.user : data;
+        if (!user) {
+          setSuccessMsg('Verifique o seu e-mail para concluir o cadastro.');
+          setIsLoading(false);
+          return;
+        }
 
-        const initials = name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'AR';
-        
-        setSuccessMsg('Cadastro concluído com sucesso! Entrando no Atelier...');
-        
+        const userName = user.user_metadata?.name || name || user.email || '';
+        const initials = userName
+          .split(' ')
+          .map((n: string) => n[0])
+          .join('')
+          .substring(0, 2)
+          .toUpperCase();
+
+        onSuccess({
+          name: userName,
+          email: user.email,
+          initials,
+        });
+
+        setSuccessMsg(tab === 'login' ? `Bem-vindo de volta, ${user.user_metadata?.name || name}!` : 'Cadastro concluído com sucesso!');
         setTimeout(() => {
-          onSuccess({ name, email, initials });
           onClose();
           setIsLoading(false);
           setSuccessMsg('');
-          // Clear inputs
-          setName('');
-          setEmail('');
-          setPassword('');
-        }, 1500);
+        }, 900);
+      } catch (e) {
+        console.error(e);
+        setErrorMsg('Erro de rede. Tente novamente.');
+        setIsLoading(false);
       }
-    }, 1200);
+    })();
+  };
+
+  const handleGoogleSignIn = async () => {
+    setErrorMsg('');
+    setIsLoading(true);
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+
+    if (error) {
+      console.error(error);
+      setErrorMsg('Falha ao iniciar login com Google.');
+      setIsLoading(false);
+    }
   };
 
   const autofillDemo = () => {
@@ -366,9 +352,19 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               </button>
             </form>
 
-            {/* Quick Helper Credentials Banner for Ease of Testing */}
+            <button
+              id="auth-google-btn"
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="w-full bg-white text-brand-primary border border-brand-outline-variant/30 hover:bg-brand-surface font-semibold py-3.5 rounded-full text-xs uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+            >
+              Entrar com Google
+            </button>
+
+            {/* Quick Helper Instructions for Ease of Testing */}
             <div id="auth-predefined-hint" className="p-3 bg-brand-surface border border-brand-outline-variant/20 rounded-xl text-[10.5px] leading-relaxed text-zinc-500 text-center">
-              💡 <span className="font-semibold text-brand-primary">Dica para Avaliação:</span> Acesso rápido disponível com o usuário exemplar do sistema: e-mail <strong className="text-brand-primary select-all">cfm@cesar.school</strong> e senha <strong className="text-brand-primary select-all">123456</strong>.
+              💡 <span className="font-semibold text-brand-primary">Dica para Avaliação:</span> Cadastre-se com seu e-mail ou use o botão "Entrar com Google" para autenticar pelo Supabase.
             </div>
           </div>
         </motion.div>
