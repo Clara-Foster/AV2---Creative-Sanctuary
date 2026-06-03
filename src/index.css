@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  /* Brand-aligned colors from the design system */
+  --color-brand-primary: #451274;
+  --color-brand-primary-container: #5d2e8c;
+  --color-brand-secondary: #e4dff7;
+  --color-brand-secondary-container: #e4dff7;
+  --color-brand-tertiary: #dfc71f;
+  --color-brand-tertiary-fixed: #fde33f;
+  --color-brand-accent: #fde33f;
+  --color-brand-surface: #faf9fe;
+  --color-brand-surface-container: #eeedf2;
+  --color-brand-on-surface: #1a1c1f;
+  --color-brand-outline: #7d7482;
+  --color-brand-outline-variant: #cec3d2;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+

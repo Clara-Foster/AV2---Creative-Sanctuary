@@ -1,0 +1,6 @@
+{
+  "name": "Creative Sanctuary",
+  "description": "Estúdio criativo para a proteção criptográfica e assinatura digital de obras de arte.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
