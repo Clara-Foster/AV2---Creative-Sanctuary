@@ -18,5 +18,9 @@ export default defineConfig(() => {
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
+    build: {
+      // Aumenta o limite para evitar warning durante o deploy
+      chunkSizeWarningLimit: 2000, // em KB (2000 KB = ~2 MB)
+    },
   };
 });
