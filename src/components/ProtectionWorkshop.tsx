@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Shield, 
@@ -51,9 +51,8 @@ export default function ProtectionWorkshop({
   // State management
   const [appState, setAppState] = useState<AppState>('ready');
   const [selectedPreset, setSelectedPreset] = useState<PresetArtwork | null>(null);
-  const [customImage, setCustomImage] = useState<string | null>(null);
-  const [customFileName, setCustomFileName] = useState<string>('');
-  const [dragOver, setDragOver] = useState(false);
+  const [customImageUrl, setCustomImageUrl] = useState<string>('');
+  const [customImageUrlError, setCustomImageUrlError] = useState<string>('');
   
   // Signature Customization Control
   const [signatureConfig, setSignatureConfig] = useState<SignatureConfig>({
@@ -80,16 +79,14 @@ export default function ProtectionWorkshop({
   // State tab explicitly to review the 3 states generated in 16:9 aspect ratio
   const [selectedSceneState, setSelectedSceneState] = useState<AppState>('ready');
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   // Sync with active preset from dashboard if selected
   useEffect(() => {
     if (activePresetId) {
       const found = PRESET_ARTWORKS.find(a => a.id === activePresetId);
       if (found) {
         setSelectedPreset(found);
-        setCustomImage(null);
-        setCustomFileName('');
+        setCustomImageUrl('');
+        setCustomImageUrlError('');
         setSignatureConfig(prev => ({
           ...prev,
           artistName: found.artist,
@@ -102,12 +99,12 @@ export default function ProtectionWorkshop({
     }
   }, [activePresetId]);
 
-  // Set default preset if nothing is loaded or uploaded
+  // Set default preset if nothing is selected and no custom URL exists
   useEffect(() => {
-    if (!selectedPreset && !customImage) {
+    if (!selectedPreset && !customImageUrl.trim()) {
       setSelectedPreset(PRESET_ARTWORKS[0]);
     }
-  }, [selectedPreset, customImage]);
+  }, [selectedPreset, customImageUrl]);
 
   // Generate a mock hash when entering protected state
   const mockGenerateHash = () => {
@@ -119,9 +116,35 @@ export default function ProtectionWorkshop({
     return hex;
   };
 
+  const validateImageUrl = (value: string) => {
+    if (!value.trim()) return false;
+    try {
+      const url = new URL(value.trim());
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  const handleCustomImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCustomImageUrl(value);
+    setCustomImageUrlError('');
+    if (value.trim() && !validateImageUrl(value)) {
+      setCustomImageUrlError('Use um endereço de imagem válido começando com http:// ou https://');
+    }
+    if (value.trim()) {
+      setSelectedPreset(null);
+    }
+  };
+
   // State machine simulation triggers
   const handleStartProtection = () => {
-    if (!selectedPreset && !customImage) return;
+    if (!selectedPreset && !customImageUrl.trim()) return;
+    if (customImageUrl.trim() && !validateImageUrl(customImageUrl)) {
+      setCustomImageUrlError('Use um endereço de imagem válido começando com http:// ou https://');
+      return;
+    }
     
     setAppState('processing');
     setSelectedSceneState('processing');
@@ -141,10 +164,10 @@ export default function ProtectionWorkshop({
             setGeneratedHash(newHash);
             
             // Generate historical record to sync with Galeria
-            const title = customImage ? (customFileName.split('.')[0] || signatureConfig.artworkTitle) : (selectedPreset?.title || signatureConfig.artworkTitle);
-            const artist = customImage ? signatureConfig.artistName : (selectedPreset?.artist || signatureConfig.artistName);
+            const title = customImageUrl ? signatureConfig.artworkTitle : (selectedPreset?.title || signatureConfig.artworkTitle);
+            const artist = customImageUrl ? signatureConfig.artistName : (selectedPreset?.artist || signatureConfig.artistName);
             const year = signatureConfig.creationYear;
-            const img = customImage || selectedPreset?.imageUrl || PRESET_ARTWORKS[0].imageUrl;
+            const img = customImageUrl || selectedPreset?.imageUrl || PRESET_ARTWORKS[0].imageUrl;
 
             onAddRecord({
               id: `rec-${Date.now()}`,
@@ -183,59 +206,6 @@ export default function ProtectionWorkshop({
       setCurrentStep(2); // Injetando Assinatura
     }
   }, [processProgress]);
-
-  // Drag and drop events
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      processFile(file);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      processFile(file);
-    }
-  };
-
-  const processFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setCustomImage(event.target.result as string);
-        setCustomFileName(file.name);
-        setSelectedPreset(null);
-        clearActivePreset();
-        
-        // Populate standard configs with filename
-        const tidyName = file.name.split('.')[0].replace(/[-_]/g, ' ');
-        const capitName = tidyName.charAt(0).toUpperCase() + tidyName.slice(1);
-        
-        setSignatureConfig(prev => ({
-          ...prev,
-          artworkTitle: capitName,
-          creationYear: new Date().getFullYear().toString()
-        }));
-        
-        setAppState('ready');
-        setSelectedSceneState('ready');
-      }
-    };
-    reader.readAsDataURL(file);
-  };
 
   // Reset tool
   const handleReset = () => {
@@ -353,7 +323,7 @@ export default function ProtectionWorkshop({
 
   // Get active image for background or image rendering
   const getActiveProductImage = () => {
-    if (customImage) return customImage;
+    if (customImageUrl) return customImageUrl;
     if (selectedPreset) return selectedPreset.imageUrl;
     return PRESET_ARTWORKS[0].imageUrl;
   };
@@ -427,76 +397,67 @@ export default function ProtectionWorkshop({
                         <UploadCloud className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="font-headline-sm text-brand-primary text-base">Atelier de Upload</h3>
-                        <p className="text-xs text-brand-on-surface/50">Carregue ou escolha uma obra de arte exemplar para proteger</p>
+                        <h3 className="font-headline-sm text-brand-primary text-base">Atelier de Link Externo</h3>
+                        <p className="text-xs text-brand-on-surface/50">Forneça um link de imagem externo ou escolha uma obra do estúdio para proteger.</p>
                       </div>
                     </div>
-                    {customImage && (
+                    {customImageUrl && (
                       <button 
                         onClick={() => {
-                          setCustomImage(null);
-                          setCustomFileName('');
+                          setCustomImageUrl('');
+                          setCustomImageUrlError('');
                           setSelectedPreset(PRESET_ARTWORKS[0]);
                         }}
                         className="text-xs text-brand-primary hover:underline flex items-center gap-1 font-semibold"
                       >
-                        <RefreshCw className="w-3 h-3" /> Limpar Upload
+                        <RefreshCw className="w-3 h-3" /> Limpar Link
                       </button>
                     )}
                   </div>
 
-                  {/* Drag and Drop Zone */}
-                  <div 
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`relative h-80 rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-8 text-center cursor-pointer overflow-hidden transition-all duration-300 ${
-                      dragOver 
-                        ? 'border-brand-primary bg-brand-secondary/30 scale-[1.01]' 
-                        : 'border-brand-outline-variant hover:border-brand-primary bg-brand-surface hover:bg-white'
-                    }`}
-                  >
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      onChange={handleFileChange} 
-                      accept="image/*" 
-                      className="hidden" 
-                    />
-
-                    {customImage ? (
-                      <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/5 group">
-                        <img 
-                          src={customImage} 
-                          alt="Suas Artes" 
-                          className="w-full h-full object-contain max-h-72 transition-transform duration-500 group-hover:scale-105" 
-                          referrerPolicy="no-referrer"
+                  <div className="relative h-80 rounded-xl border-2 border-dashed p-8 text-center overflow-hidden transition-all duration-300 border-brand-outline-variant bg-brand-surface">
+                    <div className="relative h-full flex flex-col justify-center gap-5">
+                      <div className="mx-auto w-full max-w-3xl">
+                        <label className="block text-left text-[11px] font-semibold uppercase tracking-wider text-brand-primary mb-2">
+                          Link da Arte (URL pública)
+                        </label>
+                        <input
+                          type="url"
+                          value={customImageUrl}
+                          onChange={handleCustomImageUrlChange}
+                          placeholder="https://example.com/sua-obra.jpg"
+                          className="w-full rounded-2xl border border-brand-outline-variant/60 bg-white/90 px-4 py-3 text-sm text-brand-on-surface shadow-sm outline-none transition-all focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
                         />
-                        <div className="absolute inset-0 bg-brand-primary/10 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="bg-brand-primary text-white text-xs px-4 py-2 rounded-full font-label-md flex items-center gap-2 shadow-lg">
-                            <UploadCloud className="w-4 h-4" /> Alterar Arquivo
-                          </span>
-                        </div>
+                        {customImageUrlError && (
+                          <p className="mt-2 text-[11px] text-rose-500">{customImageUrlError}</p>
+                        )}
                       </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="w-20 h-20 bg-brand-secondary/30 rounded-full flex items-center justify-center mx-auto text-brand-primary border border-brand-primary/10">
-                          <Shield className="w-10 h-10 text-brand-primary" />
-                        </div>
-                        
-                        <div>
-                          <p className="font-headline-sm text-brand-primary text-lg font-bold">Inicie a Salvaguarda Digital</p>
-                          <p className="text-sm text-brand-on-surface/60 mt-1 max-w-sm mx-auto">
-                            Arraste e solte seu arquivo de arte ou clique para procurar localmente.
-                          </p>
-                        </div>
 
-                        <span className="inline-block bg-brand-primary text-white text-xs font-semibold uppercase px-6 py-2.5 rounded-full shadow-lg shadow-brand-primary/25 hover:opacity-90 active:scale-95 transition-all">
-                          Escolher Obra-prima
-                        </span>
-                      </div>
-                    )}
+                      {customImageUrl ? (
+                        <div className="relative mx-auto w-full max-w-3xl rounded-3xl overflow-hidden border border-brand-outline-variant bg-zinc-100">
+                          <img
+                            src={customImageUrl}
+                            alt="Preview da Arte Externa"
+                            className="w-full h-64 object-contain bg-zinc-100"
+                            referrerPolicy="no-referrer"
+                            onLoad={() => setCustomImageUrlError('')}
+                            onError={() => setCustomImageUrlError('Não foi possível carregar a imagem desse link. Verifique o endereço e tente novamente.')}
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-4 py-12">
+                          <div className="w-20 h-20 bg-brand-secondary/30 rounded-full flex items-center justify-center mx-auto text-brand-primary border border-brand-primary/10">
+                            <Shield className="w-10 h-10 text-brand-primary" />
+                          </div>
+                          <div>
+                            <p className="font-headline-sm text-brand-primary text-lg font-bold">Insira o link da sua obra</p>
+                            <p className="text-sm text-brand-on-surface/60 mt-1 max-w-sm mx-auto">
+                              Cole o URL público direto para a imagem hospedada pelo usuário. O armazenamento fica a cargo do usuário.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Preset Choice Selection */}
@@ -514,8 +475,8 @@ export default function ProtectionWorkshop({
                             key={art.id}
                             onClick={() => {
                               setSelectedPreset(art);
-                              setCustomImage(null);
-                              setCustomFileName('');
+                              setCustomImageUrl('');
+                              setCustomImageUrlError('');
                               setSignatureConfig(prev => ({
                                 ...prev,
                                 artistName: art.artist,
