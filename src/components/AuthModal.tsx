@@ -12,7 +12,6 @@ import {
   Lock, 
   Mail, 
   User, 
-  Sparkles, 
   ShieldCheck, 
   AlertCircle, 
   Eye, 
@@ -33,7 +32,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [artMedium, setArtMedium] = useState('Digital Illustration');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -116,22 +114,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         setIsLoading(false);
       }
     })();
-  };
-
-  const handleGoogleSignIn = async () => {
-    setErrorMsg('');
-    setIsLoading(true);
-
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    });
-
-    if (error) {
-      console.error(error);
-      setErrorMsg('Falha ao iniciar login com Google.');
-      setIsLoading(false);
-    }
   };
 
   const autofillDemo = () => {
@@ -311,28 +293,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                 </div>
               </div>
 
-              {/* Medium Selection (Register exclusive) */}
-              {tab === 'register' && (
-                <div id="auth-register-medium-field">
-                  <label className="block text-[11px] font-bold text-brand-primary uppercase tracking-wider mb-1.5 ml-1">
-                    Foco Criativo (Mídia Principal)
-                  </label>
-                  <select
-                    id="select-register-medium"
-                    value={artMedium}
-                    onChange={(e) => setArtMedium(e.target.value)}
-                    disabled={isLoading}
-                    className="w-full bg-brand-surface border border-brand-outline-variant/35 rounded-full px-4 py-2.5 text-xs text-brand-on-surface focus:outline-none focus:border-brand-primary focus:bg-white transition-all disabled:opacity-50"
-                  >
-                    <option value="Digital Illustration">Ilustração Digital / Pintura</option>
-                    <option value="Generative AI Art">Arte Gerativa abstrata</option>
-                    <option value="Photography">Astrofotografia & Fotomicrografia</option>
-                    <option value="3D Modeling">Modelagem 3D & Animações</option>
-                    <option value="Multi-medium">Técnicas Mistas</option>
-                  </select>
-                </div>
-              )}
-
               {/* Submit Buttons */}
               <button
                 id="auth-submit-btn"
@@ -354,19 +314,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               </button>
             </form>
 
-            <button
-              id="auth-google-btn"
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={isLoading}
-              className="w-full bg-white text-brand-primary border border-brand-outline-variant/30 hover:bg-brand-surface font-semibold py-3.5 rounded-full text-xs uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
-            >
-              Entrar com Google
-            </button>
-
-            {/* Quick Helper Instructions for Ease of Testing */}
             <div id="auth-predefined-hint" className="p-3 bg-brand-surface border border-brand-outline-variant/20 rounded-xl text-[10.5px] leading-relaxed text-zinc-500 text-center">
-              💡 <span className="font-semibold text-brand-primary">Dica para Avaliação:</span> Cadastre-se com seu e-mail ou use o botão "Entrar com Google" para autenticar pelo Supabase.
+              💡 <span className="font-semibold text-brand-primary">Dica rápida:</span> Use seu e-mail e senha para entrar ou registrar sua conta.
             </div>
           </div>
         </motion.div>
