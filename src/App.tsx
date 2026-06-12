@@ -485,7 +485,7 @@ export default function App() {
             <section className="space-y-6">
               <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
                 <h2 className="font-headline-md text-brand-primary text-lg font-bold flex items-center gap-2">
-                  <FileCheck className="w-5 h-5" /> Ativos Protegidos no Atelier
+                  <FileCheck className="w-5 h-5" /> Artes Certificadas
                 </h2>
                 <button 
                   onClick={() => triggerPrepareNewScreen()}
