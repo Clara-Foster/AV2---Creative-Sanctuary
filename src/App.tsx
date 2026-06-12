@@ -5,8 +5,9 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { supabase } from './lib/supabaseClient';
 import { 
   Shield, 
   Palette, 
@@ -41,6 +42,61 @@ export default function App() {
   // Auth states
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string; initials: string } | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  useEffect(() => {
+    const restoreSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      const user = data.session?.user;
+      if (user) {
+        const userName = user.user_metadata?.name || user.email || '';
+        const initials = userName
+          .split(' ')
+          .map((n: string) => n[0])
+          .join('')
+          .substring(0, 2)
+          .toUpperCase();
+
+        setCurrentUser({
+          name: userName,
+          email: user.email,
+          initials,
+        });
+      }
+    };
+
+    restoreSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      const user = session?.user;
+      if (user) {
+        const userName = user.user_metadata?.name || user.email || '';
+        const initials = userName
+          .split(' ')
+          .map((n: string) => n[0])
+          .join('')
+          .substring(0, 2)
+          .toUpperCase();
+
+        setCurrentUser({
+          name: userName,
+          email: user.email,
+          initials,
+        });
+      } else {
+        setCurrentUser(null);
+      }
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe?.();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setCurrentUser(null);
+    setActiveTab('proteger');
+  };
 
   // Quick detail modal state for an artwork record
   const [activeDetailRecord, setActiveDetailRecord] = useState<ProtectedRecord | null>(null);
@@ -260,10 +316,9 @@ export default function App() {
             <div 
               id="sidebar-logout-btn"
               className="flex items-center gap-3 px-4 py-2 text-brand-on-surface/75 hover:bg-red-50 hover:text-red-600 rounded-lg cursor-pointer transition-all font-bold" 
-              onClick={() => {
+              onClick={async () => {
                 if (window.confirm('Desconectando do seu Santuário Criativo... Deseja prosseguir?')) {
-                  setCurrentUser(null);
-                  setActiveTab('proteger');
+                  await handleLogout();
                 }
               }}
             >
