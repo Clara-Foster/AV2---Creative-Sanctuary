@@ -171,7 +171,7 @@ export default function App() {
               Creative Sanctuary
             </span>
             <span className="text-[10px] font-mono uppercase tracking-widest text-brand-outline font-semibold">
-              Estúdio de Salvaguarda
+              Estúdio de Proteção
             </span>
           </div>
         </div>

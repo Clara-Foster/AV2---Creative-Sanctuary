@@ -158,7 +158,7 @@ export default function LandingPage({
         <div className="w-full lg:w-[420px] shrink-0 space-y-4">
           <div className="bg-gradient-to-tr from-brand-primary to-brand-primary-container text-white rounded-2xl p-6 shadow-xl relative overflow-hidden text-left">
             <div className="absolute top-0 right-0 w-32 h-32 bg-brand-accent/10 rounded-full blur-xl"></div>
-            <p className="text-[10px] font-mono tracking-widest text-brand-accent uppercase font-bold mb-1">NÓ ATIVO DE SEGURANÇA</p>
+            <p className="text-[10px] font-mono tracking-widest text-brand-accent uppercase font-bold mb-1">ATIVO DE SEGURANÇA</p>
             <h4 className="font-headline-sm font-bold text-lg mb-3">Sua Autoria Garantida</h4>
             <div className="p-3 bg-white/10 rounded-xl space-y-2 text-xs border border-white/10 font-mono">
               <div className="flex justify-between border-b border-white/5 pb-1 text-white/80">
