@@ -42,13 +42,29 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const getStorageKey = (userId: string) => `creative-sanctuary-records-${userId}`;
+  const PLACEHOLDER_RECORD_TITLES = [
+    'Pinheiros Sussurrantes',
+    'Pétalas da Manhã',
+    'Planícies Etéreas'
+  ];
+
+  const cleanPlaceholderRecords = (recordsToClean: ProtectedRecord[]) => {
+    return recordsToClean.filter(
+      (record) => !PLACEHOLDER_RECORD_TITLES.includes(record.title)
+    );
+  };
 
   const loadStoredRecords = (userId: string) => {
     try {
       const stored = localStorage.getItem(getStorageKey(userId));
       if (!stored) return [];
       const parsed = JSON.parse(stored) as ProtectedRecord[];
-      return Array.isArray(parsed) ? parsed : [];
+      if (!Array.isArray(parsed)) return [];
+      const cleaned = cleanPlaceholderRecords(parsed);
+      if (cleaned.length !== parsed.length) {
+        localStorage.setItem(getStorageKey(userId), JSON.stringify(cleaned));
+      }
+      return cleaned;
     } catch {
       return [];
     }
