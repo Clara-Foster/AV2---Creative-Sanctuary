@@ -117,7 +117,7 @@ export default function LandingPage({
               className="bg-brand-primary text-white font-bold text-xs uppercase tracking-wider px-8 py-4 rounded-full shadow-lg shadow-brand-primary/25 hover:opacity-95 active:scale-[0.98] transition-all flex items-center gap-2"
             >
               <Shield className="w-4 h-4 text-brand-accent" />
-              Proteger Minha Primeira Arte
+              Proteger Minha Arte
             </button>
 
             {isLoggedIn ? (
