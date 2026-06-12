@@ -452,7 +452,7 @@ export default function ProtectionWorkshop({
                   <div className="text-center space-y-2">
                     <h3 className="font-headline-sm text-brand-primary text-xl font-bold">Comprimindo e Criptografando Canvas</h3>
                     <p className="text-sm text-brand-on-surface/60 max-w-md mx-auto">
-                      Estamos envolvendo sua obra-prima em proteção criptográfica. Isso registrará a autoria permanente de <strong>{signatureConfig.artistName}</strong>.
+                      Estamos envolvendo sua obra em proteção criptográfica. Isso registrará a autoria permanente de <strong>{signatureConfig.artistName}</strong>.
                     </p>
                   </div>
 
@@ -759,7 +759,7 @@ export default function ProtectionWorkshop({
               {/* Artwork Title Input */}
               <div>
                 <label className="block text-[11px] font-bold text-brand-on-surface/75 mb-1 bg-brand-secondary/40 px-2 py-0.5 rounded w-max">
-                  Título da Obra-prima
+                  Título da Obra
                 </label>
                 <input
                   type="text"

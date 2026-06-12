@@ -106,7 +106,7 @@ export default function LandingPage({
           </h1>
 
           <p className="text-sm md:text-base text-brand-on-surface/75 leading-relaxed max-w-xl">
-            O Creative Sanctuary protege suas obras-primas contra raspagem não autorizada de modelos de IA e carimba sua assinatura autoral diretamente no código das telas, gerando certificados imutáveis e auditáveis.
+            O Creative Sanctuary protege suas obras contra raspagem não autorizada de modelos de IA e carimba sua assinatura autoral diretamente no código das telas, gerando certificados imutáveis e auditáveis.
           </p>
 
           <div className="flex flex-wrap gap-4 pt-4">

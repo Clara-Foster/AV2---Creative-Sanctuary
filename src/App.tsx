@@ -504,7 +504,7 @@ export default function App() {
                 <div className="absolute top-0 right-0 w-64 h-full bg-brand-secondary opacity-15 rounded-l-full blur-2xl"></div>
                 <h1 className="font-display-lg text-brand-primary tracking-tight">Olá, {currentUser.name}.</h1>
                 <p className="text-sm text-brand-on-surface/70 max-w-2xl">
-                  Seu santuário é cuidado e seguro. Explore suas últimas obras-primas e ativos digitais protegidos com assinaturas indelúveis contra reprodução não autorizada.
+                  Seu santuário é cuidado e seguro. Explore suas últimas obras e ativos digitais protegidos com assinaturas indelúveis contra reprodução não autorizada.
                 </p>
               </section>
 
@@ -531,7 +531,7 @@ export default function App() {
                 </div>
                 <div>
                   <h2 className="font-headline-sm text-brand-primary text-lg">
-                    {records.length} Obras-primas Verificadas
+                    {records.length} Obras Verificadas
                   </h2>
                   <p className="text-xs text-brand-on-surface/60">Ativos Criptografados no Bloco</p>
                 </div>
@@ -632,7 +632,7 @@ export default function App() {
                 Compartilhe sua visão com o mundo, com proteção.
               </h1>
               <p className="text-sm md:text-base text-brand-on-surface/75">
-                Usamos criptografia suave para escanear sua obra-prima, garantindo que seus direitos criativos sejam preservados antes de chegarem ao éter digital.
+                Usamos criptografia suave para escanear sua obra, garantindo que seus direitos criativos sejam preservados antes de chegarem ao éter digital.
               </p>
             </section>
 
