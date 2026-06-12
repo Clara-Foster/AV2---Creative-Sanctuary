@@ -19,7 +19,6 @@ import {
   Verified,
   FileCheck
 } from 'lucide-react';
-import { PRESET_ARTWORKS } from '../data';
 
 interface LandingPageProps {
   onStartProtecting: (presetId?: string) => void;
@@ -262,61 +261,6 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* 4. PRESET EXPERIMENTAL TELEMETRIES (TRY ON DEMAND) */}
-      <section id="preset-tryout-section" className="space-y-6">
-        <div className="flex justify-between items-center border-b border-zinc-100 pb-3 text-left">
-          <div>
-            <h2 className="font-headline-md text-brand-primary text-lg font-bold flex items-center gap-2">
-              <Palette className="w-5 h-5" /> Catálogo de Amostras para Inocular
-            </h2>
-            <p className="text-xs text-brand-on-surface/50">Selecione uma destas belas obras clássicas para testar instantaneamente os filtros do atelier.</p>
-          </div>
-          <button 
-            type="button"
-            onClick={() => onStartProtecting()}
-            className="text-xs font-bold text-brand-primary hover:underline flex items-center gap-1.5"
-          >
-            Começar do zero <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {PRESET_ARTWORKS.map((pa) => (
-            <div 
-              key={pa.id}
-              onClick={() => onStartProtecting(pa.id)}
-              className="group cursor-pointer bg-white rounded-xl overflow-hidden border border-brand-outline-variant/20 hover:border-brand-primary shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
-            >
-              <div className="p-3 text-left">
-                <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-zinc-100 mb-3">
-                  <img 
-                    src={pa.imageUrl} 
-                    alt={pa.title} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute top-2 left-2 bg-brand-primary/95 text-white rounded-full font-mono text-[8px] px-2.5 py-1 tracking-wider uppercase shadow">
-                    PROMO_DEMO
-                  </div>
-                </div>
-
-                <div className="px-1 space-y-1">
-                  <h4 className="font-headline-sm text-brand-primary text-sm font-bold truncate">{pa.title}</h4>
-                  <div className="flex justify-between items-center text-[9.5px] text-brand-on-surface/50 font-mono">
-                    <span>{pa.artist}</span>
-                    <span>{pa.medium}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-zinc-50 hover:bg-brand-secondary/20 px-3.5 py-2.5 border-t border-zinc-100 flex justify-between items-center text-[10.5px] text-brand-primary font-bold transition-colors">
-                <span>Inoculação rápida de marcas</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* 5. GUEST CONVITE BANNER FOR UNREGISTERED USERS */}
       {!isLoggedIn && (

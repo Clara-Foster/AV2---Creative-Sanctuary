@@ -29,15 +29,13 @@ import {
 } from 'lucide-react';
 
 import { ProtectedRecord } from './types';
-import { PRESET_ARTWORKS, INITIAL_RECORDS } from './data';
 import ProtectionWorkshop from './components/ProtectionWorkshop';
 import AuthModal from './components/AuthModal';
 import LandingPage from './components/LandingPage';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'inicio' | 'estudio' | 'proteger'>('inicio');
-  const [records, setRecords] = useState<ProtectedRecord[]>(INITIAL_RECORDS);
-  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [records, setRecords] = useState<ProtectedRecord[]>([]);
   
   // Auth states
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string; initials: string } | null>(null);
@@ -48,11 +46,11 @@ export default function App() {
   const loadStoredRecords = (userId: string) => {
     try {
       const stored = localStorage.getItem(getStorageKey(userId));
-      if (!stored) return INITIAL_RECORDS;
+      if (!stored) return [];
       const parsed = JSON.parse(stored) as ProtectedRecord[];
-      return Array.isArray(parsed) ? parsed : INITIAL_RECORDS;
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
-      return INITIAL_RECORDS;
+      return [];
     }
   };
 
@@ -67,7 +65,7 @@ export default function App() {
   // Notifications simulation
   const [notifications, setNotifications] = useState<string[]>([
     'Seu Estúdio criativo está seguro e monitorado.',
-    'Assinatura digital inserida com sucesso em "Pétalas da Manhã".',
+    'As marcas digitais foram aplicadas com sucesso à sua obra.',
     'Conexão estável estabelecida no nó de criptografia porta 3000.'
   ]);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
@@ -119,7 +117,7 @@ export default function App() {
         setRecords(loadStoredRecords(user.id));
       } else {
         setCurrentUser(null);
-        setRecords(INITIAL_RECORDS);
+        setRecords([]);
       }
     });
 
@@ -144,7 +142,7 @@ export default function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setCurrentUser(null);
-    setRecords(INITIAL_RECORDS);
+    setRecords([]);
     setActiveTab('proteger');
   };
 
@@ -162,12 +160,7 @@ export default function App() {
   const [activeDetailRecord, setActiveDetailRecord] = useState<ProtectedRecord | null>(null);
 
   // Trigger quick screen action
-  const triggerPrepareNewScreen = (presetId?: string) => {
-    if (presetId) {
-      setSelectedPresetId(presetId);
-    } else {
-      setSelectedPresetId(null);
-    }
+  const triggerPrepareNewScreen = (_presetId?: string) => {
     setActiveTab('proteger');
   };
 
@@ -595,7 +588,6 @@ export default function App() {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedPresetId(PRESET_ARTWORKS.find(p => p.title === rec.title)?.id || null);
                           setActiveTab('proteger');
                         }}
                         className="text-brand-primary font-bold hover:underline"
@@ -632,8 +624,6 @@ export default function App() {
             <ProtectionWorkshop 
               onAddRecord={handleAddRecord}
               onNavigateToGallery={() => setActiveTab('estudio')}
-              activePresetId={selectedPresetId}
-              clearActivePreset={() => setSelectedPresetId(null)}
             />
           </motion.div>
         )}

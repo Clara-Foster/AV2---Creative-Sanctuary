@@ -27,8 +27,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { AppState, SignatureConfig, PresetArtwork, ProtectedRecord } from '../types';
-import { PRESET_ARTWORKS } from '../data';
+import { AppState, SignatureConfig, ProtectedRecord } from '../types';
 
 // Reference local generated image paths directly as strings to comply with TypeScript mapping
 const state1Img = "/src/assets/images/scene_state1_artist_ready_1780087668126.png";
@@ -38,19 +37,14 @@ const state3Img = "/src/assets/images/scene_state3_artist_protected_178008770671
 interface WorkshopProps {
   onAddRecord: (record: ProtectedRecord) => void;
   onNavigateToGallery: () => void;
-  activePresetId?: string | null;
-  clearActivePreset: () => void;
 }
 
 export default function ProtectionWorkshop({ 
   onAddRecord, 
-  onNavigateToGallery, 
-  activePresetId, 
-  clearActivePreset 
+  onNavigateToGallery
 }: WorkshopProps) {
   // State management
   const [appState, setAppState] = useState<AppState>('ready');
-  const [selectedPreset, setSelectedPreset] = useState<PresetArtwork | null>(null);
   const [customImageUrl, setCustomImageUrl] = useState<string>('');
   const [customImageUrlError, setCustomImageUrlError] = useState<string>('');
   
@@ -80,31 +74,6 @@ export default function ProtectionWorkshop({
   const [selectedSceneState, setSelectedSceneState] = useState<AppState>('ready');
 
   // Sync with active preset from dashboard if selected
-  useEffect(() => {
-    if (activePresetId) {
-      const found = PRESET_ARTWORKS.find(a => a.id === activePresetId);
-      if (found) {
-        setSelectedPreset(found);
-        setCustomImageUrl('');
-        setCustomImageUrlError('');
-        setSignatureConfig(prev => ({
-          ...prev,
-          artistName: found.artist,
-          artworkTitle: found.title,
-          creationYear: found.year
-        }));
-        setAppState('ready');
-        setSelectedSceneState('ready');
-      }
-    }
-  }, [activePresetId]);
-
-  // Set default preset if nothing is selected and no custom URL exists
-  useEffect(() => {
-    if (!selectedPreset && !customImageUrl.trim()) {
-      setSelectedPreset(PRESET_ARTWORKS[0]);
-    }
-  }, [selectedPreset, customImageUrl]);
 
   // Generate a mock hash when entering protected state
   const mockGenerateHash = () => {
@@ -133,15 +102,12 @@ export default function ProtectionWorkshop({
     if (value.trim() && !validateImageUrl(value)) {
       setCustomImageUrlError('Use um endereço de imagem válido começando com http:// ou https://');
     }
-    if (value.trim()) {
-      setSelectedPreset(null);
-    }
   };
 
   // State machine simulation triggers
   const handleStartProtection = () => {
-    if (!selectedPreset && !customImageUrl.trim()) return;
-    if (customImageUrl.trim() && !validateImageUrl(customImageUrl)) {
+    if (!customImageUrl.trim()) return;
+    if (!validateImageUrl(customImageUrl)) {
       setCustomImageUrlError('Use um endereço de imagem válido começando com http:// ou https://');
       return;
     }
@@ -164,10 +130,10 @@ export default function ProtectionWorkshop({
             setGeneratedHash(newHash);
             
             // Generate historical record to sync with Galeria
-            const title = customImageUrl ? signatureConfig.artworkTitle : (selectedPreset?.title || signatureConfig.artworkTitle);
-            const artist = customImageUrl ? signatureConfig.artistName : (selectedPreset?.artist || signatureConfig.artistName);
+            const title = signatureConfig.artworkTitle;
+            const artist = signatureConfig.artistName;
             const year = signatureConfig.creationYear;
-            const img = customImageUrl || selectedPreset?.imageUrl || PRESET_ARTWORKS[0].imageUrl;
+            const img = customImageUrl;
 
             onAddRecord({
               id: `rec-${Date.now()}`,
@@ -323,9 +289,7 @@ export default function ProtectionWorkshop({
 
   // Get active image for background or image rendering
   const getActiveProductImage = () => {
-    if (customImageUrl) return customImageUrl;
-    if (selectedPreset) return selectedPreset.imageUrl;
-    return PRESET_ARTWORKS[0].imageUrl;
+    return customImageUrl;
   };
 
   return (
@@ -406,7 +370,6 @@ export default function ProtectionWorkshop({
                         onClick={() => {
                           setCustomImageUrl('');
                           setCustomImageUrlError('');
-                          setSelectedPreset(PRESET_ARTWORKS[0]);
                         }}
                         className="text-xs text-brand-primary hover:underline flex items-center gap-1 font-semibold"
                       >
@@ -460,53 +423,6 @@ export default function ProtectionWorkshop({
                     </div>
                   </div>
 
-                  {/* Preset Choice Selection */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-1 text-[11px] font-bold text-brand-primary uppercase tracking-widest">
-                      <Sparkles className="w-3.5 h-3.5 text-brand-accent animate-spin" style={{ animationDuration: '4s' }} />
-                      <span>Ou Selecione uma Obra do Nosso Estúdio</span>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4">
-                      {PRESET_ARTWORKS.map((art) => {
-                        const isSelected = selectedPreset?.id === art.id;
-                        return (
-                          <div 
-                            key={art.id}
-                            onClick={() => {
-                              setSelectedPreset(art);
-                              setCustomImageUrl('');
-                              setCustomImageUrlError('');
-                              setSignatureConfig(prev => ({
-                                ...prev,
-                                artistName: art.artist,
-                                artworkTitle: art.title,
-                                creationYear: art.year
-                              }));
-                            }}
-                            className={`group cursor-pointer rounded-lg overflow-hidden border p-2 transition-all flex flex-col justify-between ${
-                              isSelected 
-                                ? 'border-brand-primary bg-brand-secondary/20 shadow-md ring-1 ring-brand-primary' 
-                                : 'border-brand-outline-variant/30 hover:border-brand-primary/40 bg-zinc-50'
-                            }`}
-                          >
-                            <div className="aspect-[4/3] rounded overflow-hidden bg-zinc-200 relative mb-2">
-                              <img 
-                                src={art.imageUrl} 
-                                alt={art.title} 
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
-                                referrerPolicy="no-referrer"
-                              />
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-brand-primary truncate">{art.title}</p>
-                              <p className="text-[9px] text-brand-on-surface/60 truncate">{art.artist} • {art.year}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
                 </motion.div>
               )}
 
