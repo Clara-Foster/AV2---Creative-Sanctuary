@@ -50,8 +50,8 @@ export default function ProtectionWorkshop({
   
   // Signature Customization Control
   const [signatureConfig, setSignatureConfig] = useState<SignatureConfig>({
-    artistName: 'Elena Vance',
-    artworkTitle: 'Sussurros do Horizonte',
+    artistName: '',
+    artworkTitle: '',
     creationYear: '2026',
     style: 'hexadecimal',
     color: '#d0a0ff', // Light slate purple
