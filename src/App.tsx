@@ -40,8 +40,29 @@ export default function App() {
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   
   // Auth states
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; initials: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string; initials: string } | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  const getStorageKey = (userId: string) => `creative-sanctuary-records-${userId}`;
+
+  const loadStoredRecords = (userId: string) => {
+    try {
+      const stored = localStorage.getItem(getStorageKey(userId));
+      if (!stored) return INITIAL_RECORDS;
+      const parsed = JSON.parse(stored) as ProtectedRecord[];
+      return Array.isArray(parsed) ? parsed : INITIAL_RECORDS;
+    } catch {
+      return INITIAL_RECORDS;
+    }
+  };
+
+  const persistRecordsForUser = (userId: string, recordsToStore: ProtectedRecord[]) => {
+    try {
+      localStorage.setItem(getStorageKey(userId), JSON.stringify(recordsToStore));
+    } catch (error) {
+      console.warn('Falha ao salvar registros do estúdio', error);
+    }
+  };
 
   useEffect(() => {
     const restoreSession = async () => {
@@ -57,10 +78,12 @@ export default function App() {
           .toUpperCase();
 
         setCurrentUser({
+          id: user.id,
           name: userName,
           email: user.email,
           initials,
         });
+        setRecords(loadStoredRecords(user.id));
       }
     };
 
@@ -78,12 +101,15 @@ export default function App() {
           .toUpperCase();
 
         setCurrentUser({
+          id: user.id,
           name: userName,
           email: user.email,
           initials,
         });
+        setRecords(loadStoredRecords(user.id));
       } else {
         setCurrentUser(null);
+        setRecords(INITIAL_RECORDS);
       }
     });
 
@@ -95,7 +121,18 @@ export default function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setCurrentUser(null);
+    setRecords(INITIAL_RECORDS);
     setActiveTab('proteger');
+  };
+
+  const handleAddRecord = (newRec: ProtectedRecord) => {
+    setRecords(prev => {
+      const next = [newRec, ...prev];
+      if (currentUser) {
+        persistRecordsForUser(currentUser.id, next);
+      }
+      return next;
+    });
   };
 
   // Quick detail modal state for an artwork record
@@ -108,11 +145,6 @@ export default function App() {
     'Conexão estável estabelecida no nó de criptografia porta 3000.'
   ]);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
-
-  // Add a newly secured record to the list
-  const handleAddRecord = (newRec: ProtectedRecord) => {
-    setRecords(prev => [newRec, ...prev]);
-  };
 
   // Trigger quick screen action
   const triggerPrepareNewScreen = (presetId?: string) => {
@@ -672,6 +704,7 @@ export default function App() {
         onClose={() => setIsAuthModalOpen(false)} 
         onSuccess={(user) => {
           setCurrentUser(user);
+          setRecords(loadStoredRecords(user.id));
           setActiveTab('estudio');
           setNotifications(prev => [
             `Sessão autorizada para o artista: ${user.name}`,

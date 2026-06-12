@@ -24,7 +24,7 @@ import { supabase } from '../lib/supabaseClient';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (user: { name: string; email: string; initials: string }) => void;
+  onSuccess: (user: { id: string; name: string; email: string; initials: string }) => void;
 }
 
 export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
@@ -97,6 +97,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
           .toUpperCase();
 
         onSuccess({
+          id: user.id,
           name: userName,
           email: user.email,
           initials,
