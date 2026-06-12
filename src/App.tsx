@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from './lib/supabaseClient';
 import { 
@@ -64,6 +64,16 @@ export default function App() {
     }
   };
 
+  // Notifications simulation
+  const [notifications, setNotifications] = useState<string[]>([
+    'Seu Estúdio criativo está seguro e monitorado.',
+    'Assinatura digital inserida com sucesso em "Pétalas da Manhã".',
+    'Conexão estável estabelecida no nó de criptografia porta 3000.'
+  ]);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const restoreSession = async () => {
       const { data } = await supabase.auth.getSession();
@@ -118,6 +128,19 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!showUserMenu) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserMenu]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setCurrentUser(null);
@@ -137,14 +160,6 @@ export default function App() {
 
   // Quick detail modal state for an artwork record
   const [activeDetailRecord, setActiveDetailRecord] = useState<ProtectedRecord | null>(null);
-
-  // Notifications simulation
-  const [notifications, setNotifications] = useState<string[]>([
-    'Seu Estúdio criativo está seguro e monitorado.',
-    'Assinatura digital inserida com sucesso em "Pétalas da Manhã".',
-    'Conexão estável estabelecida no nó de criptografia porta 3000.'
-  ]);
-  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
 
   // Trigger quick screen action
   const triggerPrepareNewScreen = (presetId?: string) => {
@@ -256,15 +271,48 @@ export default function App() {
           </div>
 
           {currentUser ? (
-            <div 
-              id="header-user-badge"
-              onClick={() => {
-                setActiveTab('estudio');
-              }}
-              title={`Ver Meu Estúdio (${currentUser.name})`}
-              className="w-9 h-9 rounded-full bg-brand-primary text-brand-secondary flex items-center justify-center font-bold text-xs ring-2 ring-brand-secondary cursor-pointer shadow-md shadow-brand-primary/10 hover:opacity-90"
-            >
-              {currentUser.initials}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                id="header-user-badge"
+                type="button"
+                onClick={() => setShowUserMenu((prev) => !prev)}
+                title={`Ver Meu Estúdio (${currentUser.name})`}
+                className="w-9 h-9 rounded-full bg-brand-primary text-brand-secondary flex items-center justify-center font-bold text-xs ring-2 ring-brand-secondary cursor-pointer shadow-md shadow-brand-primary/10 hover:opacity-90"
+              >
+                {currentUser.initials}
+              </button>
+
+              <AnimatePresence>
+                {showUserMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="absolute right-0 mt-2 w-40 bg-white rounded-2xl border border-brand-outline-variant/40 shadow-2xl shadow-black/10 z-50 overflow-hidden"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('estudio');
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm font-semibold text-brand-primary hover:bg-brand-surface transition-colors"
+                    >
+                      Meu Estúdio
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setShowUserMenu(false);
+                        await handleLogout();
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Sair
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ) : (
             <button
